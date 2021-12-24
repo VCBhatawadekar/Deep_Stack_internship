@@ -1,28 +1,28 @@
-var file_system = require('fs');
+const {Transform} = require('stream');
 
-var read_stream = file_system.createReadStream('./data.txt',{encoding:'utf8'})
+class Histogram extends Transform {
+    constructor(counts={}){
+        super();
+        this.counts = counts;
+}
 
-var counts = {}
-read_stream.on('data',function(datachunk){
+_transform(chunk, encoding = 'utf8', callback){
     
-    var words = datachunk.split(/[" ","\n","\r"]/);
-
+    chunk = chunk.toString();
+    var words = chunk.split(/[" ","\n","\r"]/);
     for (let i = 0;i<words.length;i++){
-        if (counts[words[i]]){
-            counts[words[i]]++;
+        if (this.counts[words[i]]){
+            this.counts[words[i]]++;
         }
         else{
-            counts[words[i]] = 1;
+            this.counts[words[i]] = 1;
         }
     }
-    
-})
+    this.push(JSON.stringify(this.counts));
+}
 
-read_stream.on('end', function give_histogram(){
-    console.log('The histogram is as follows...');
-    console.log(counts);
-    var write_stream = file_system.createWriteStream('./final_histogram.txt',{encoding:'utf8'});
-    write_stream.write(JSON.stringify(counts))
-  });
+}
+
+module.exports = { Histogram }
 
 
